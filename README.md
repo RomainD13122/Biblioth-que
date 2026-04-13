@@ -17,61 +17,112 @@ Elle permet d'inventorier des livres dans une base de données MySQL via une int
 
 ## Prérequis
 
-| Outil | Version minimale |
-|-------|-----------------|
-| [.NET SDK](https://dotnet.microsoft.com/download) | 5.0 |
-| MySQL | 5.7 / 8.x |
-| XAMPP / WAMP / MySQL Workbench | _(au choix)_ |
+Avant de commencer, assurez-vous d'avoir installé :
+
+| Outil | Version minimale | Lien |
+|-------|-----------------|------|
+| .NET SDK | 5.0 | [Télécharger](https://dotnet.microsoft.com/download) |
+| XAMPP (inclut MySQL) | toute version récente | [Télécharger](https://www.apachefriends.org/fr/index.html) |
+
+> Si vous utilisez WAMP ou MySQL Workbench à la place de XAMPP, les étapes MySQL restent identiques.
 
 ---
 
-## Installation
+## Premier lancement — étape par étape
 
-### 1. Cloner le dépôt
+### Étape 1 — Cloner le projet
+
+Ouvrez un terminal (cmd, PowerShell ou Git Bash) et exécutez :
 
 ```bash
-git clone <url-du-repo>
-cd BibliothequeApp
+git clone https://github.com/RomainD13122/Biblioth-que.git
+cd Biblioth-que
 ```
 
-### 2. Créer la base de données
+---
 
-Exécuter le script SQL fourni à la racine du projet.
+### Étape 2 — Démarrer MySQL avec XAMPP
 
-**MySQL Workbench :** `File → Open SQL Script → database.sql → ⚡ Exécuter`
+L'application a besoin que MySQL soit actif **avant** d'être lancée.
 
-**phpMyAdmin :** onglet **Importer** → sélectionner `database.sql`
+1. Ouvrez le **XAMPP Control Panel** (cherchez-le dans le menu Démarrer)
+2. Sur la ligne **MySQL**, cliquez sur le bouton **Start**
+3. Attendez que le voyant passe au **vert** et qu'un numéro de port (`3306`) apparaisse
 
-**Ligne de commande :**
+> Sans cette étape, l'application affichera une erreur de connexion au démarrage.
+
+---
+
+### Étape 3 — Créer la base de données
+
+C'est une opération à faire **une seule fois**. Elle crée la base `LibraryDB` et la table `Books`.
+
+**Option A — Via phpMyAdmin (recommandé avec XAMPP)**
+
+1. Ouvrez votre navigateur et allez sur `http://localhost/phpmyadmin`
+2. Dans le menu de gauche, cliquez sur **Importer** (onglet du haut)
+3. Cliquez sur **Choisir un fichier** et sélectionnez le fichier `database.sql` à la racine du projet
+4. Faites défiler en bas et cliquez sur **Exécuter**
+5. phpMyAdmin affiche un message vert de confirmation
+
+**Option B — Via la ligne de commande**
+
 ```bash
-mysql -u root -p < database.sql
+C:/xampp/mysql/bin/mysql.exe -u root < database.sql
 ```
 
-Cela crée la base `LibraryDB` et la table `Books` avec 5 livres de démonstration.
+**Option C — Via MySQL Workbench**
 
-### 3. Configurer la connexion
+1. `File → Open SQL Script` → sélectionner `database.sql`
+2. Cliquer sur l'éclair ⚡ pour exécuter
 
-Ouvrir `Data/BookRepository.cs` et modifier la constante en haut de la classe :
+---
+
+### Étape 4 — Vérifier la chaîne de connexion
+
+Ouvrez le fichier `Data/BookRepository.cs` et vérifiez la ligne suivante (vers le haut du fichier) :
 
 ```csharp
 private const string ConnectionString =
-    "server=localhost;port=3306;user=root;password=TON_MOT_DE_PASSE;database=LibraryDB;CharSet=utf8mb4;";
+    "server=localhost;port=3306;user=root;password=;database=LibraryDB;CharSet=utf8mb4;";
 ```
+
+**Avec XAMPP par défaut**, cette ligne n'a pas besoin d'être modifiée (mot de passe vide, port 3306).
+
+Si votre configuration est différente, adaptez ces paramètres :
 
 | Paramètre  | Valeur par défaut | À modifier si… |
 |------------|-------------------|----------------|
 | `server`   | `localhost`       | MySQL sur un autre hôte |
-| `port`     | `3306`            | Port personnalisé |
-| `user`     | `root`            | Autre utilisateur MySQL |
-| `password` | _(vide)_          | Mot de passe défini |
+| `port`     | `3306`            | Port différent dans XAMPP |
+| `user`     | `root`            | Vous avez créé un autre utilisateur |
+| `password` | _(vide)_          | Vous avez défini un mot de passe root |
 
-### 4. Lancer l'application
+---
+
+### Étape 5 — Lancer l'application
+
+Dans le terminal, depuis le dossier du projet :
 
 ```bash
 dotnet run
 ```
 
-Ou depuis Visual Studio : `F5`.
+Ou depuis **Visual Studio** : ouvrez `BibliothequeApp.csproj` puis appuyez sur `F5`.
+
+L'application s'ouvre et charge automatiquement les 5 livres de démonstration insérés par le script SQL.
+
+---
+
+### Récapitulatif du premier lancement
+
+```
+1. Cloner le repo
+2. Démarrer MySQL dans XAMPP Control Panel
+3. Importer database.sql via phpMyAdmin (une seule fois)
+4. Vérifier la chaîne de connexion si besoin
+5. dotnet run
+```
 
 ---
 
@@ -95,17 +146,17 @@ BibliothequeApp/
 
 ## Modèle de données
 
-| Champ        | Type SQL        | Obligatoire |
-|--------------|-----------------|-------------|
-| Id           | INT AUTO_INCREMENT | — (auto) |
-| Titre        | VARCHAR(255)    | Oui |
-| Auteur       | VARCHAR(255)    | Oui |
-| ISBN         | VARCHAR(20)     | Oui (unique) |
-| AnneePubli   | INT             | Oui |
-| Genre        | VARCHAR(100)    | Non |
-| Rayon        | VARCHAR(100)    | Non |
-| Etagere      | VARCHAR(50)     | Non |
-| Disponible   | TINYINT(1)      | Non (défaut : 1) |
+| Champ        | Type SQL           | Obligatoire      |
+|--------------|--------------------|------------------|
+| Id           | INT AUTO_INCREMENT | — (automatique)  |
+| Titre        | VARCHAR(255)       | Oui              |
+| Auteur       | VARCHAR(255)       | Oui              |
+| ISBN         | VARCHAR(20)        | Oui (unique)     |
+| AnneePubli   | INT                | Oui              |
+| Genre        | VARCHAR(100)       | Non              |
+| Rayon        | VARCHAR(100)       | Non              |
+| Etagere      | VARCHAR(50)        | Non              |
+| Disponible   | TINYINT(1)         | Non (défaut : 1) |
 
 ---
 
