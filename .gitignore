@@ -1,0 +1,33 @@
+# ── Données sensibles ────────────────────────────────────────────
+# Chaînes de connexion / secrets
+appsettings*.json
+!appsettings.example.json
+secrets.json
+*.env
+.env*
+connectionstrings.config
+database.config
+
+# ── Build .NET ───────────────────────────────────────────────────
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.cache
+
+# ── NuGet ────────────────────────────────────────────────────────
+packages/
+*.nupkg
+project.lock.json
+project.assets.json
+
+# ── OS ───────────────────────────────────────────────────────────
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# ── Logs / temporaires ───────────────────────────────────────────
+*.log
+*.tmp
+*.bak
