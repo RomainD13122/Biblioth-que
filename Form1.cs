@@ -33,6 +33,7 @@ namespace BibliothequeApp
         // ── Configuration initiale de la DataGridView ──────────────────
         private void ConfigurerGrille()
         {
+            dgvLivres.AutoGenerateColumns = false;
             // Colonnes avec libellés français
             dgvLivres.Columns.Clear();
             dgvLivres.Columns.Add(new DataGridViewTextBoxColumn { Name = "colId",     HeaderText = "ID",           DataPropertyName = "Id",         Visible = false });
