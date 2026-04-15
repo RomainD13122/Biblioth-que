@@ -12,6 +12,9 @@ Elle permet d'inventorier des livres dans une base de données MySQL via une int
 - **Supprimer** un livre (avec confirmation)
 - **Rechercher** par titre, auteur, genre ou ISBN
 - **Afficher** l'inventaire complet dans un tableau interactif
+- **Emprunter et Rendre** un livre avec le suivi du lecteur (Bonus)
+- **Trier et Filtrer** la liste des livres (Bonus)
+- **Gérer les couvertures** des livres avec affichage (Bonus)
 
 ---
 
@@ -157,6 +160,9 @@ BibliothequeApp/
 | Rayon        | VARCHAR(100)       | Non              |
 | Etagere      | VARCHAR(50)        | Non              |
 | Disponible   | TINYINT(1)         | Non (défaut : 1) |
+| Couverture   | VARCHAR(255)       | Non              |
+| Emprunteur   | VARCHAR(255)       | Non              |
+| DateEmprunt  | DATE               | Non              |
 
 ---
 

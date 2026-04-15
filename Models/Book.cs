@@ -1,3 +1,5 @@
+using System;
+
 namespace BibliothequeApp.Models
 {
     /// <summary>
@@ -15,5 +17,8 @@ namespace BibliothequeApp.Models
         public string Rayon      { get; set; } = string.Empty;
         public string Etagere    { get; set; } = string.Empty;
         public bool   Disponible { get; set; } = true;
+        public string Couverture { get; set; } = string.Empty;
+        public string Emprunteur { get; set; } = string.Empty;
+        public DateTime? DateEmprunt { get; set; }
     }
 }

@@ -44,11 +44,17 @@ namespace BibliothequeApp
             btnAfficherTout = new System.Windows.Forms.Button();
             dgvLivres       = new System.Windows.Forms.DataGridView();
             lblStatus       = new System.Windows.Forms.Label();
+            pbCouverture    = new System.Windows.Forms.PictureBox();
+            btnCouverture   = new System.Windows.Forms.Button();
+            btnEmprunter    = new System.Windows.Forms.Button();
+            btnRendre       = new System.Windows.Forms.Button();
+            cmbFiltreDispo  = new System.Windows.Forms.ComboBox();
 
             grpFormulaire.SuspendLayout();
             grpActions.SuspendLayout();
             grpRecherche.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvLivres).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pbCouverture).BeginInit();
             SuspendLayout();
 
             // ── GroupBox Formulaire ────────────────────────────────────
@@ -120,10 +126,22 @@ namespace BibliothequeApp
                 lblRayon, txtRayon, lblEtagere, txtEtagere, lblDisponible, chkDisponible
             });
 
+            // ── Couverture ─────────────────────────────────────────────
+            pbCouverture.Location   = new System.Drawing.Point(610, 12);
+            pbCouverture.Size       = new System.Drawing.Size(150, 200);
+            pbCouverture.SizeMode   = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            pbCouverture.BorderStyle= System.Windows.Forms.BorderStyle.FixedSingle;
+
+            btnCouverture.Text      = "Choisir l'image";
+            btnCouverture.Location  = new System.Drawing.Point(610, 218);
+            btnCouverture.Size      = new System.Drawing.Size(150, 28);
+            btnCouverture.BackColor = System.Drawing.Color.LightGray;
+            btnCouverture.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+
             // ── GroupBox Actions ───────────────────────────────────────
             grpActions.Text     = "Actions";
             grpActions.Location = new System.Drawing.Point(12, 252);
-            grpActions.Size     = new System.Drawing.Size(580, 60);
+            grpActions.Size     = new System.Drawing.Size(820, 60);
 
             btnAjouter.Text      = "Ajouter";
             btnAjouter.Location  = new System.Drawing.Point(10, 24);
@@ -153,14 +171,28 @@ namespace BibliothequeApp
             btnVider.ForeColor = System.Drawing.Color.White;
             btnVider.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
 
+            btnEmprunter.Text      = "Emprunter";
+            btnEmprunter.Location  = new System.Drawing.Point(542, 24);
+            btnEmprunter.Size      = new System.Drawing.Size(110, 28);
+            btnEmprunter.BackColor = System.Drawing.Color.DarkOrchid;
+            btnEmprunter.ForeColor = System.Drawing.Color.White;
+            btnEmprunter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+
+            btnRendre.Text      = "Rendre";
+            btnRendre.Location  = new System.Drawing.Point(662, 24);
+            btnRendre.Size      = new System.Drawing.Size(110, 28);
+            btnRendre.BackColor = System.Drawing.Color.Teal;
+            btnRendre.ForeColor = System.Drawing.Color.White;
+            btnRendre.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+
             grpActions.Controls.AddRange(new System.Windows.Forms.Control[] {
-                btnAjouter, btnModifier, btnSupprimer, btnVider
+                btnAjouter, btnModifier, btnSupprimer, btnVider, btnEmprunter, btnRendre
             });
 
             // ── GroupBox Recherche ─────────────────────────────────────
             grpRecherche.Text     = "Recherche  (titre / auteur / genre / ISBN)";
             grpRecherche.Location = new System.Drawing.Point(12, 324);
-            grpRecherche.Size     = new System.Drawing.Size(580, 58);
+            grpRecherche.Size     = new System.Drawing.Size(820, 58);
 
             txtRecherche.Location        = new System.Drawing.Point(10, 22);
             txtRecherche.Size            = new System.Drawing.Size(310, 23);
@@ -180,8 +212,14 @@ namespace BibliothequeApp
             btnAfficherTout.ForeColor = System.Drawing.Color.White;
             btnAfficherTout.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
 
+            cmbFiltreDispo.Location     = new System.Drawing.Point(578, 22);
+            cmbFiltreDispo.Size         = new System.Drawing.Size(150, 23);
+            cmbFiltreDispo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cmbFiltreDispo.Items.AddRange(new object[] { "Tous", "Disponibles", "Empruntés" });
+            cmbFiltreDispo.SelectedIndex = 0;
+
             grpRecherche.Controls.AddRange(new System.Windows.Forms.Control[] {
-                txtRecherche, btnRechercher, btnAfficherTout
+                txtRecherche, btnRechercher, btnAfficherTout, cmbFiltreDispo
             });
 
             // ── DataGridView ───────────────────────────────────────────
@@ -220,7 +258,7 @@ namespace BibliothequeApp
             BackColor           = System.Drawing.Color.FromArgb(250, 250, 250);
 
             Controls.AddRange(new System.Windows.Forms.Control[] {
-                grpFormulaire, grpActions, grpRecherche, dgvLivres, lblStatus
+                grpFormulaire, grpActions, grpRecherche, dgvLivres, lblStatus, pbCouverture, btnCouverture
             });
 
             grpFormulaire.ResumeLayout(false);
@@ -228,6 +266,7 @@ namespace BibliothequeApp
             grpActions.ResumeLayout(false);
             grpRecherche.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvLivres).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pbCouverture).EndInit();
             ResumeLayout(false);
         }
 
@@ -265,5 +304,13 @@ namespace BibliothequeApp
         // Grille + status
         private System.Windows.Forms.DataGridView dgvLivres;
         private System.Windows.Forms.Label        lblStatus;
+        // Couverture
+        private System.Windows.Forms.PictureBox   pbCouverture;
+        private System.Windows.Forms.Button       btnCouverture;
+        // Emprunt
+        private System.Windows.Forms.Button       btnEmprunter;
+        private System.Windows.Forms.Button       btnRendre;
+        // Filtre
+        private System.Windows.Forms.ComboBox     cmbFiltreDispo;
     }
 }

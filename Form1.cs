@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using System.IO;
+using System.Linq;
 using BibliothequeApp.Data;
 using BibliothequeApp.Models;
 
@@ -14,6 +16,10 @@ namespace BibliothequeApp
 
         // Id du livre sélectionné dans la grille (-1 = aucune sélection)
         private int _selectedBookId = -1;
+        private string _currentCoverPath = "";
+        
+        // Liste en mémoire pour le tri/filtre
+        private List<Book> _livresActuels = new List<Book>();
 
         // ── Constructeur ───────────────────────────────────────────────
         public Form1()
@@ -38,6 +44,8 @@ namespace BibliothequeApp
             dgvLivres.Columns.Add(new DataGridViewTextBoxColumn { Name = "colRayon",  HeaderText = "Rayon",        DataPropertyName = "Rayon" });
             dgvLivres.Columns.Add(new DataGridViewTextBoxColumn { Name = "colEtag",   HeaderText = "Étagère",      DataPropertyName = "Etagere" });
             dgvLivres.Columns.Add(new DataGridViewCheckBoxColumn { Name = "colDispo", HeaderText = "Disponible",   DataPropertyName = "Disponible" });
+            dgvLivres.Columns.Add(new DataGridViewTextBoxColumn { Name = "colCouverture", DataPropertyName = "Couverture", Visible = false });
+            dgvLivres.Columns.Add(new DataGridViewTextBoxColumn { Name = "colEmprunt", HeaderText = "Emprunteur",  DataPropertyName = "Emprunteur" });
         }
 
         // ── Abonnement aux événements ──────────────────────────────────
@@ -51,6 +59,13 @@ namespace BibliothequeApp
             btnAfficherTout.Click += BtnAfficherTout_Click;
             dgvLivres.SelectionChanged += DgvLivres_SelectionChanged;
 
+            // Nouveaux événements pour les bonus
+            btnCouverture.Click += BtnCouverture_Click;
+            btnEmprunter.Click += BtnEmprunter_Click;
+            btnRendre.Click += BtnRendre_Click;
+            cmbFiltreDispo.SelectedIndexChanged += CmbFiltreDispo_SelectedIndexChanged;
+            dgvLivres.ColumnHeaderMouseClick += DgvLivres_ColumnHeaderMouseClick;
+
             // Recherche en appuyant sur Entrée dans la zone de texte
             txtRecherche.KeyDown += (s, e) =>
             {
@@ -63,15 +78,28 @@ namespace BibliothequeApp
         {
             try
             {
-                var liste = livres ?? _repo.GetAllBooks();
-                dgvLivres.DataSource = null;
-                dgvLivres.DataSource = liste;
-                SetStatus($"{liste.Count} livre(s) affiché(s).");
+                _livresActuels = livres ?? _repo.GetAllBooks();
+                AppliquerFiltreEtTri();
             }
             catch (Exception ex)
             {
                 AfficherErreur(ex.Message);
             }
+        }
+
+        private void AppliquerFiltreEtTri()
+        {
+            IEnumerable<Book> liste = _livresActuels;
+
+            // Filtrage basique
+            string filtre = cmbFiltreDispo.SelectedItem?.ToString() ?? "Tous";
+            if (filtre == "Disponibles") liste = liste.Where(b => b.Disponible);
+            else if (filtre == "Empruntés") liste = liste.Where(b => !b.Disponible);
+
+            dgvLivres.DataSource = null;
+            var finalListe = liste.ToList();
+            dgvLivres.DataSource = finalListe;
+            SetStatus($"{finalListe.Count} livre(s) affiché(s).");
         }
 
         // ── Sélection d'une ligne → remplissage du formulaire ──────────
@@ -89,6 +117,20 @@ namespace BibliothequeApp
             txtRayon.Text    = row.Cells["colRayon"].Value?.ToString()  ?? "";
             txtEtagere.Text  = row.Cells["colEtag"].Value?.ToString()   ?? "";
             chkDisponible.Checked = Convert.ToBoolean(row.Cells["colDispo"].Value);
+            
+            _currentCoverPath = row.Cells["colCouverture"].Value?.ToString() ?? "";
+            AfficherImageCouverture(_currentCoverPath);
+        }
+
+        private void AfficherImageCouverture(string path)
+        {
+            try {
+                if (pbCouverture.Image != null) pbCouverture.Image.Dispose();
+                if (!string.IsNullOrEmpty(path) && File.Exists(path))
+                    pbCouverture.Image = Image.FromFile(path);
+                else
+                    pbCouverture.Image = null;
+            } catch { pbCouverture.Image = null; }
         }
 
         // ── CRUD ───────────────────────────────────────────────────────
@@ -122,8 +164,14 @@ namespace BibliothequeApp
 
             try
             {
+                var original = _repo.GetAllBooks().FirstOrDefault(b => b.Id == _selectedBookId);
                 var livre = LireFomulaire();
                 livre.Id = _selectedBookId;
+                if (original != null) {
+                    livre.Emprunteur = original.Emprunteur;
+                    livre.DateEmprunt = original.DateEmprunt;
+                }
+                
                 _repo.UpdateBook(livre);
                 ChargerLivres();
                 SetStatus("Livre modifié avec succès.", success: true);
@@ -205,7 +253,80 @@ namespace BibliothequeApp
             txtRayon.Clear();
             txtEtagere.Clear();
             chkDisponible.Checked = true;
+            _currentCoverPath = "";
+            AfficherImageCouverture("");
             dgvLivres.ClearSelection();
+        }
+
+        // ── Bonus: Couvertures, Emprunt, Tri/Filtre ────────────────────
+
+        private void BtnCouverture_Click(object? sender, EventArgs e)
+        {
+            using var ofd = new OpenFileDialog();
+            ofd.Filter = "Fichiers image|*.jpg;*.jpeg;*.png;*.gif;*.bmp";
+            if (ofd.ShowDialog() == DialogResult.OK)
+            {
+                string destFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images");
+                if (!Directory.Exists(destFolder)) Directory.CreateDirectory(destFolder);
+                string fileName = Path.GetFileName(ofd.FileName);
+                string destPath = Path.Combine(destFolder, fileName);
+                if (!File.Exists(destPath)) File.Copy(ofd.FileName, destPath);
+                
+                _currentCoverPath = destPath;
+                AfficherImageCouverture(destPath);
+            }
+        }
+
+        private void BtnEmprunter_Click(object? sender, EventArgs e)
+        {
+            if (_selectedBookId == -1) { MessageBox.Show("Sélectionnez un livre."); return; }
+            var original = _repo.GetAllBooks().FirstOrDefault(b => b.Id == _selectedBookId);
+            if (original == null) return;
+            if (!original.Disponible) { MessageBox.Show("Ce livre est déjà emprunté."); return; }
+            
+            // Interaction simpliste : on demande le nom de l'emprunteur
+            string emprunteur = "Lecteur"; 
+            Form prompt = new Form() { Width = 300, Height = 150, Text = "Emprunt", StartPosition = FormStartPosition.CenterParent };
+            TextBox txt = new TextBox() { Left = 20, Top = 20, Width = 200, Text = emprunteur };
+            Button btnOk = new Button() { Text = "OK", Left = 20, Top = 60, DialogResult = DialogResult.OK };
+            prompt.Controls.Add(txt); prompt.Controls.Add(btnOk);
+            prompt.AcceptButton = btnOk;
+            if (prompt.ShowDialog() == DialogResult.OK && !string.IsNullOrWhiteSpace(txt.Text))
+            {
+                original.Disponible = false;
+                original.Emprunteur = txt.Text.Trim();
+                original.DateEmprunt = DateTime.Now;
+                _repo.UpdateBook(original);
+                ChargerLivres();
+            }
+        }
+
+        private void BtnRendre_Click(object? sender, EventArgs e)
+        {
+            if (_selectedBookId == -1) { MessageBox.Show("Sélectionnez un livre."); return; }
+            var original = _repo.GetAllBooks().FirstOrDefault(b => b.Id == _selectedBookId);
+            if (original == null) return;
+            if (original.Disponible) { MessageBox.Show("Livre déjà disponible."); return; }
+
+            original.Disponible = true;
+            original.Emprunteur = "";
+            original.DateEmprunt = null;
+            _repo.UpdateBook(original);
+            ChargerLivres();
+        }
+
+        private void CmbFiltreDispo_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            AppliquerFiltreEtTri();
+        }
+
+        private void DgvLivres_ColumnHeaderMouseClick(object? sender, DataGridViewCellMouseEventArgs e)
+        {
+            var col = dgvLivres.Columns[e.ColumnIndex];
+            if (col.DataPropertyName == "Titre") _livresActuels = _livresActuels.OrderBy(b => b.Titre).ToList();
+            else if (col.DataPropertyName == "Auteur") _livresActuels = _livresActuels.OrderBy(b => b.Auteur).ToList();
+            else if (col.DataPropertyName == "AnneePubli") _livresActuels = _livresActuels.OrderBy(b => b.AnneePubli).ToList();
+            AppliquerFiltreEtTri();
         }
 
         // ── Helpers ────────────────────────────────────────────────────
@@ -220,6 +341,7 @@ namespace BibliothequeApp
             Rayon      = txtRayon.Text.Trim(),
             Etagere    = txtEtagere.Text.Trim(),
             Disponible = chkDisponible.Checked,
+            Couverture = _currentCoverPath
         };
 
         /// <summary>Vérifie que les champs obligatoires sont remplis.</summary>

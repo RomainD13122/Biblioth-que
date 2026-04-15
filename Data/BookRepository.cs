@@ -40,6 +40,9 @@ namespace BibliothequeApp.Data
             Rayon      = r.GetString("Rayon"),
             Etagere    = r.GetString("Etagere"),
             Disponible = r.GetBoolean("Disponible"),
+            Couverture = r.IsDBNull(r.GetOrdinal("Couverture")) ? "" : r.GetString("Couverture"),
+            Emprunteur = r.IsDBNull(r.GetOrdinal("Emprunteur")) ? "" : r.GetString("Emprunteur"),
+            DateEmprunt = r.IsDBNull(r.GetOrdinal("DateEmprunt")) ? (DateTime?)null : r.GetDateTime("DateEmprunt"),
         };
 
         // ----------------------------------------------------------------
@@ -54,7 +57,7 @@ namespace BibliothequeApp.Data
             {
                 using var conn = OpenConnection();
                 using var cmd  = new MySqlCommand(
-                    "SELECT Id, Titre, Auteur, ISBN, AnneePubli, Genre, Rayon, Etagere, Disponible FROM Books ORDER BY Titre;",
+                    "SELECT Id, Titre, Auteur, ISBN, AnneePubli, Genre, Rayon, Etagere, Disponible, Couverture, Emprunteur, DateEmprunt FROM Books ORDER BY Titre;",
                     conn);
                 using var reader = cmd.ExecuteReader();
                 while (reader.Read())
@@ -74,8 +77,8 @@ namespace BibliothequeApp.Data
             {
                 using var conn = OpenConnection();
                 const string sql =
-                    "INSERT INTO Books (Titre, Auteur, ISBN, AnneePubli, Genre, Rayon, Etagere, Disponible) " +
-                    "VALUES (@titre, @auteur, @isbn, @annee, @genre, @rayon, @etagere, @dispo);";
+                    "INSERT INTO Books (Titre, Auteur, ISBN, AnneePubli, Genre, Rayon, Etagere, Disponible, Couverture, Emprunteur, DateEmprunt) " +
+                    "VALUES (@titre, @auteur, @isbn, @annee, @genre, @rayon, @etagere, @dispo, @couverture, @emprunteur, @dateEmprunt);";
                 using var cmd = new MySqlCommand(sql, conn);
                 BindParams(cmd, book);
                 cmd.ExecuteNonQuery();
@@ -95,7 +98,9 @@ namespace BibliothequeApp.Data
                 using var conn = OpenConnection();
                 const string sql =
                     "UPDATE Books SET Titre=@titre, Auteur=@auteur, ISBN=@isbn, AnneePubli=@annee, " +
-                    "Genre=@genre, Rayon=@rayon, Etagere=@etagere, Disponible=@dispo WHERE Id=@id;";
+                    "Genre=@genre, Rayon=@rayon, Etagere=@etagere, Disponible=@dispo, " +
+                    "Couverture=@couverture, Emprunteur=@emprunteur, DateEmprunt=@dateEmprunt " +
+                    "WHERE Id=@id;";
                 using var cmd = new MySqlCommand(sql, conn);
                 cmd.Parameters.AddWithValue("@id", book.Id);
                 BindParams(cmd, book);
@@ -134,7 +139,7 @@ namespace BibliothequeApp.Data
             {
                 using var conn = OpenConnection();
                 const string sql =
-                    "SELECT Id, Titre, Auteur, ISBN, AnneePubli, Genre, Rayon, Etagere, Disponible FROM Books " +
+                    "SELECT Id, Titre, Auteur, ISBN, AnneePubli, Genre, Rayon, Etagere, Disponible, Couverture, Emprunteur, DateEmprunt FROM Books " +
                     "WHERE Titre    LIKE @terme " +
                     "   OR Auteur   LIKE @terme " +
                     "   OR Genre    LIKE @terme " +
@@ -166,6 +171,9 @@ namespace BibliothequeApp.Data
             cmd.Parameters.AddWithValue("@rayon",   book.Rayon);
             cmd.Parameters.AddWithValue("@etagere", book.Etagere);
             cmd.Parameters.AddWithValue("@dispo",   book.Disponible);
+            cmd.Parameters.AddWithValue("@couverture", book.Couverture);
+            cmd.Parameters.AddWithValue("@emprunteur", string.IsNullOrEmpty(book.Emprunteur) ? (object)DBNull.Value : book.Emprunteur);
+            cmd.Parameters.AddWithValue("@dateEmprunt", book.DateEmprunt.HasValue ? (object)book.DateEmprunt.Value : DBNull.Value);
         }
     }
 }
